@@ -2491,12 +2491,13 @@ function renderCharts(data){
   const byModelo={};
   data.forEach(r=>{byModelo[r[C.mod]]=(byModelo[r[C.mod]]||0)+r[C.uds]});
   const modelos=Object.entries(byModelo).sort((a,b)=>b[1]-a[1]);
+  const maxUnidadesModelo=modelos.length?Math.max(...modelos.map(m=>m[1])):0;
   chModelo=new Chart(document.getElementById('chModelo'),{
     type:'bar',
     data:{labels:modelos.map(m=>m[0]),datasets:[{label:'Unidades',data:modelos.map(m=>m[1]),backgroundColor:modelos.map((_,i)=>PALETTE[i%PALETTE.length]),borderRadius:0, barPercentage:0.97, categoryPercentage:0.97,
       datalabels:{display:true,anchor:'end',align:'top',color:'#000',font:{size:10,weight:'bold'},formatter:v=>fmtN(v)}}]},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#000',font:{size:10},maxRotation:0,minRotation:0,autoSkip:false},grid:{display:false}},y:{display:false}}}
+      scales:{x:{ticks:{color:'#000',font:{size:10},maxRotation:0,minRotation:0,autoSkip:false},grid:{display:false}},y:{max:maxUnidadesModelo*1.15,display:false}}}
   });
 
   // Forma de pago
@@ -3540,6 +3541,7 @@ function renderColorModelo(data){
   const byColor={};
   filtrada.forEach(r=>{byColor[r[C.col]]=(byColor[r[C.col]]||0)+r[C.uds]});
   const colores=Object.entries(byColor).filter(c=>c[1]!==0).sort((a,b)=>b[1]-a[1]);
+  const maxColorModelo=colores.length?Math.max(...colores.map(c=>c[1])):0;
   const total=colores.reduce((s,c)=>s+c[1],0);
 
   document.getElementById('tagColorModelo').textContent=filtroModeloColor||'todos los modelos';
@@ -3556,7 +3558,7 @@ function renderColorModelo(data){
       datalabels:{display:true,anchor:'end',align:'top',color:'#000',font:{size:10,weight:'bold'},
         formatter:(v)=>fmtN(v)+' ('+(total?(100*v/total).toFixed(1):0)+'%)'}}]},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtN(c.parsed.y)+' unidades'}}},
-      scales:{x:{ticks:{color:'#000',font:{size:10},maxRotation:0,minRotation:0,autoSkip:false},grid:{display:false}},y:{display:false}}}
+      scales:{x:{ticks:{color:'#000',font:{size:10},maxRotation:0,minRotation:0,autoSkip:false},grid:{display:false}},y:{max:maxColorModelo*1.15,display:false}}}
   });
 }
 document.getElementById('selModeloColor').addEventListener('change',e=>{
