@@ -2391,7 +2391,7 @@ function mselChangeModeloLineas(){
   if(sel.size===total||sel.size===0) lbl.textContent='Todos';
   else if(sel.size===1) lbl.textContent=[...sel][0];
   else lbl.textContent=sel.size+' seleccionados';
-  renderModelosMes(dataActual);
+  renderModelosMes(dataActualEspecifico);
 }
 // ── MULTISELECT LOCAL: Modelos por mes en Unidades (independiente de la versión $) ──
 const modeloLineasStateUds={sel:new Set(),all:[]};
@@ -2427,7 +2427,7 @@ function mselChangeModeloLineasUds(){
   if(sel.size===total||sel.size===0) lbl.textContent='Todos';
   else if(sel.size===1) lbl.textContent=[...sel][0];
   else lbl.textContent=sel.size+' seleccionados';
-  renderModelosMesUds(dataActual);
+  renderModelosMesUds(dataActualEspecifico);
 }
 function resetMsel(){
   Object.keys(selState).forEach(id=>{
@@ -2534,25 +2534,25 @@ document.getElementById('segVistaLineas').addEventListener('click',e=>{
   if(!btn) return;
   filtroVistaLineas=btn.dataset.val;
   document.querySelectorAll('#segVistaLineas button').forEach(b=>b.classList.toggle('active',b===btn));
-  renderLineasNegocio(dataActual);
+  renderLineasNegocio(dataActualEspecifico);
 });
 document.getElementById('segVistaVendedores').addEventListener('click',e=>{
   const btn=e.target.closest('button');
   if(!btn) return;
   filtroVistaVendedores=btn.dataset.val;
   document.querySelectorAll('#segVistaVendedores button').forEach(b=>b.classList.toggle('active',b===btn));
-  renderVendedoresMes(dataActual);
+  renderVendedoresMes(dataActualEspecifico);
 });
 document.getElementById('selMesParticipacion').addEventListener('change',e=>{
   filtroMesParticipacion=e.target.value;
-  renderParticipacionLineas(dataActual);
+  renderParticipacionLineas(dataActualEspecifico);
 });
 document.getElementById('segVistaModelos').addEventListener('click',e=>{
   const btn=e.target.closest('button');
   if(!btn) return;
   filtroVistaModelos=btn.dataset.val;
   document.querySelectorAll('#segVistaModelos button').forEach(b=>b.classList.toggle('active',b===btn));
-  renderModelosMes(dataActual);
+  renderModelosMes(dataActualEspecifico);
 });
 document.getElementById('segCanalModelos').addEventListener('click',e=>{
   const btn=e.target.closest('button');
@@ -2560,14 +2560,14 @@ document.getElementById('segCanalModelos').addEventListener('click',e=>{
   const yaActivo=btn.classList.contains('active');
   filtroCanalModelos=yaActivo?'':btn.dataset.val;
   document.querySelectorAll('#segCanalModelos button').forEach(b=>b.classList.toggle('active',!yaActivo&&b===btn));
-  renderModelosMes(dataActual);
+  renderModelosMes(dataActualEspecifico);
 });
 document.getElementById('segVistaModelosUds').addEventListener('click',e=>{
   const btn=e.target.closest('button');
   if(!btn) return;
   filtroVistaModelosUds=btn.dataset.val;
   document.querySelectorAll('#segVistaModelosUds button').forEach(b=>b.classList.toggle('active',b===btn));
-  renderModelosMesUds(dataActual);
+  renderModelosMesUds(dataActualEspecifico);
 });
 document.getElementById('segCanalModelosUds').addEventListener('click',e=>{
   const btn=e.target.closest('button');
@@ -2575,7 +2575,7 @@ document.getElementById('segCanalModelosUds').addEventListener('click',e=>{
   const yaActivo=btn.classList.contains('active');
   filtroCanalModelosUds=yaActivo?'':btn.dataset.val;
   document.querySelectorAll('#segCanalModelosUds button').forEach(b=>b.classList.toggle('active',!yaActivo&&b===btn));
-  renderModelosMesUds(dataActual);
+  renderModelosMesUds(dataActualEspecifico);
 });
 
 // ── FILTRO PRINCIPAL ───────────────────────────────────────────
@@ -2586,6 +2586,32 @@ let filtroOrigenRetailBoton='';
 let filtroCanalBtn='';
 let filtroCanalTicket='';
 let dataActual=[];
+let dataActualEspecifico=[];
+// Igual que filt(), pero ignora el rango de fechas de arriba — se usa en la
+// pestaña Específico, que ya muestra el comportamiento mes a mes por dentro.
+function filtSinFecha(){
+  const q=(document.getElementById('srch').value||'').trim().toLowerCase();
+  return R.filter(r=>{
+    if(!mselPasses('mProv',r[C.prov])) return false;
+    if(!mselPasses('mCiu',r[C.ciu])) return false;
+    if(!mselPasses('mZona',r[C.zona])) return false;
+    if(!mselPasses('mModelo',r[C.mod])) return false;
+    if(!mselPasses('mColor',r[C.col])) return false;
+    if(!mselPasses('mPago',r[C.pago])) return false;
+    if(!mselPasses('mCanal',r[C.canal])) return false;
+    if(r[C.canal]==='RETAIL' && !mselPasses('mTipoRetail',r[C.cli])) return false;
+    if(!mselPasses('mVend',r[C.vend])) return false;
+    if(!mselPasses('mTipo',r[C.tipo])) return false;
+    if(filtroBoton && r[C.boton]!==filtroBoton) return false;
+    if(filtroEstado && r[C.estado]!==filtroEstado) return false;
+    if(filtroCanalBtn && r[C.canal]!==filtroCanalBtn) return false;
+    if(q){
+      const hay=(r[C.cli]+' '+r[C.vend]+' '+r[C.comp]+' '+r[C.ciu]+' '+r[C.mod]+' '+r[C.prov]).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
 function filt(){
   const d1=document.getElementById('fD').value;
   const d2=document.getElementById('fH').value;
@@ -2880,13 +2906,15 @@ function update(){
   renderModeloPorCanal(data);
   renderResumenSemanal(data);
   renderColorModelo(data);
-  renderParticipacionLineas(data);
-  renderLineasNegocio(data);
-  renderVendedoresMes(data);
-  renderModelosMes(data);
-  renderModelosMesUds(data);
+  const dataEspecifico=filtSinFecha();
+  renderParticipacionLineas(dataEspecifico);
+  renderLineasNegocio(dataEspecifico);
+  renderVendedoresMes(dataEspecifico);
+  renderModelosMes(dataEspecifico);
+  renderModelosMesUds(dataEspecifico);
   renderTopModeloCanal(data);
   dataActual=data;
+  dataActualEspecifico=dataEspecifico;
   renderTicketPromedioModelo(data);
   renderTable(data);
 
