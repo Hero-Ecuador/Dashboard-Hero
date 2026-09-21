@@ -3585,7 +3585,7 @@ function renderRankings(data){
 }
 
 // ── $ POR PERFIL (Tienda Américas / Tienda Naciones Unidas / AAP) ──
-const ORDEN_PERFILES=['AAA','AA','A','BBB','BB','B','B+','B-','C+','NSSA','NSSB','CONTADO','PENDIENTE','SIN PERFIL','COLABORADOR','EXCEPCION'];
+const ORDEN_PERFILES=['AAA','AA','A','BBB','BB','B','B+','B-','C+','NSSA','NSSB','CONTADO','PENDIENTE','COLABORADOR','EXCEPCION'];
 function renderPerfil(data){
   const sel=document.getElementById('selOrigenPerfil');
   const origen=sel.value;
@@ -3600,9 +3600,9 @@ function renderPerfil(data){
     const p=r[C.perfil]||'SIN PERFIL';
     porPerfil[p]=(porPerfil[p]||0)+r[C.tot];
   });
-  const total=Object.values(porPerfil).reduce((s,v)=>s+v,0);
-  const maxVal=Math.max(1,...Object.values(porPerfil).map(v=>Math.abs(v)));
   const presentes=ORDEN_PERFILES.filter(p=>porPerfil[p]!==undefined);
+  const total=presentes.reduce((s,p)=>s+porPerfil[p],0);
+  const maxVal=Math.max(1,...presentes.map(p=>Math.abs(porPerfil[p])));
   document.getElementById('tagPerfil').textContent=presentes.length+' perfiles';
   document.getElementById('perfilList').innerHTML=presentes.map(p=>{
     const val=porPerfil[p];
